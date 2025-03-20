@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #chat-box { width: 80%; height: 300px; overflow-y: auto; border: 1px solid black; margin: auto; padding: 10px; }
+        input, button { margin: 5px; }
+        .message { text-align: left; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h2>WebSocket Chat</h2>
+    <div>
+        <label>User Name：</label>
+        <input type="text" id="username" placeholder="input your name">
+    </div>
+    <div id="chat-box"></div>
+    <input type="text" id="message" placeholder="input your message">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        let socket = new WebSocket("ws://localhost:12345/chat/1/connect");
+        let chatBox = document.getElementById("chat-box");
+
+        document.getElementById("message").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        socket.onmessage = function(event) {
+            let data = JSON.parse(event.data);
+            let message = `<div class="message"><strong>${data.username}:</strong> ${data.message}</div>`;
+            chatBox.innerHTML += message;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        };
+
+        function sendMessage() {
+            let username = document.getElementById("username").value;
+            let message = document.getElementById("message").value;
+            if (username === "" || message === "") return;
+            
+            let msgObj = { username: username, message: message };
+            socket.send(JSON.stringify(msgObj));
+            document.getElementById("message").value = "";
+        }
+    </script>
+</body>
+</html>
