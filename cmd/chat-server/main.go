@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/gorilla/websocket"
 )
 
@@ -15,22 +17,55 @@ var upgrader = websocket.Upgrader{
 }
 var clients = make(map[*websocket.Conn]bool)
 var broadcast = make(chan Message)
+var producer *kafka.Producer
 
 type Message struct {
 	Username string `json:"username"`
 	Message  string `json:"message"`
 }
 
+func init() {
+}
+
 func main() {
+	var err error
+
+	producer, err = kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost:9092"})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer producer.Close()
+
+	fmt.Printf("create producer %v\n", producer)
+
+	go listenProducerEvents()
+
 	http.HandleFunc("/chat/1/connect", handleConnections)
 
 	go handleMessages()
 
 	fmt.Println("chat-server is running on http://localhost:12345 ...")
 
-	err := http.ListenAndServe(":12345", nil)
+	err = http.ListenAndServe(":12345", nil)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func listenProducerEvents() {
+	for e := range producer.Events() {
+		switch ev := e.(type) {
+		case *kafka.Message:
+			if ev.TopicPartition.Error != nil {
+				fmt.Printf("Delivery failed: %v\n", ev.TopicPartition.Error)
+			} else {
+				fmt.Printf("Delivered message to %v\n", ev.TopicPartition)
+			}
+		case kafka.Error:
+			fmt.Printf("Error: %v\n", ev)
+		default:
+			fmt.Printf("Ignored event: %v\n", ev)
+		}
 	}
 }
 
@@ -51,6 +86,23 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 			log.Println("read message failed:", err)
 			delete(clients, conn)
 			break
+		}
+
+		topic := "chat-messages"
+		msgBytes, _ := json.Marshal(msg)
+		err = producer.Produce(
+			&kafka.Message{
+				TopicPartition: kafka.TopicPartition{
+					Topic:     &topic,
+					Partition: kafka.PartitionAny,
+				},
+				Value: msgBytes,
+			},
+			nil,
+		)
+
+		if err != nil {
+			log.Println("produce message failed:", err)
 		}
 
 		broadcast <- msg
