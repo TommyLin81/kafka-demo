@@ -18,6 +18,7 @@ var upgrader = websocket.Upgrader{
 var clients = make(map[*websocket.Conn]bool)
 var broadcast = make(chan Message)
 var producer *kafka.Producer
+var consumer *kafka.Consumer
 
 type Message struct {
 	Username string `json:"username"`
@@ -39,6 +40,25 @@ func main() {
 	fmt.Printf("create producer %v\n", producer)
 
 	go listenProducerEvents()
+
+	consumer, err = kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": "localhost:9092",
+		"group.id":          "chat-group",
+		"auto.offset.reset": "latest",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer consumer.Close()
+
+	fmt.Printf("create consumer %v\n", consumer)
+
+	err = consumer.Subscribe("chat-messages", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go listenConsumerEvents()
 
 	http.HandleFunc("/chat/1/connect", handleConnections)
 
@@ -65,6 +85,24 @@ func listenProducerEvents() {
 			fmt.Printf("Error: %v\n", ev)
 		default:
 			fmt.Printf("Ignored event: %v\n", ev)
+		}
+	}
+}
+
+func listenConsumerEvents() {
+	for {
+		message, err := consumer.ReadMessage(-1)
+		if err != nil {
+			fmt.Printf("Consumer error: %v (%v)\n", err, message)
+		} else {
+			var chatMessage Message
+			err = json.Unmarshal(message.Value, &chatMessage)
+
+			if err != nil {
+				fmt.Printf("Unmarshal error: %v\n", err)
+			} else {
+				broadcast <- chatMessage
+			}
 		}
 	}
 }
@@ -104,8 +142,6 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println("produce message failed:", err)
 		}
-
-		broadcast <- msg
 	}
 }
 
