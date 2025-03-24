@@ -19,7 +19,8 @@ var clients = make(map[*websocket.Conn]bool)
 var broadcast = make(chan Message)
 var producer *kafka.Producer
 var consumer *kafka.Consumer
-var topic = "chat-messages"
+var chatMessagesTopic = "chat-messages"
+var filteredMessageTopic = "filtered-messages"
 
 type Message struct {
 	Username string `json:"username"`
@@ -58,7 +59,7 @@ func main() {
 
 	offset := kafka.OffsetBeginning
 	offsets, err := consumer.Committed([]kafka.TopicPartition{{
-		Topic:     &topic,
+		Topic:     &filteredMessageTopic,
 		Partition: 0,
 	}}, 1000)
 
@@ -71,7 +72,7 @@ func main() {
 	}
 
 	err = consumer.Assign([]kafka.TopicPartition{{
-		Topic:     &topic,
+		Topic:     &filteredMessageTopic,
 		Partition: 0,
 		Offset:    offset,
 	}})
@@ -152,7 +153,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		err = producer.Produce(
 			&kafka.Message{
 				TopicPartition: kafka.TopicPartition{
-					Topic:     &topic,
+					Topic:     &chatMessagesTopic,
 					Partition: kafka.PartitionAny,
 				},
 				Value: msgBytes,
