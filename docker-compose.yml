@@ -52,6 +52,18 @@ services:
           --replication-factor 1
       '
 
+  chat-server:
+    build:
+      context: .
+      dockerfile: docker/chat-server/dockerfile
+    ports:
+      - "12345:80"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+
 volumes:
   kafka-data:
     driver: local
