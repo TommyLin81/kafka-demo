@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/TommyLin81/kafka-demo/internal/entities"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
@@ -14,11 +15,6 @@ var consumer *kafka.Consumer
 var chatMessagesTopic = "chat-messages"
 var filteredMessageTopic = "filtered-messages"
 var sensitiveWords = []string{"badword", "badword2"}
-
-type Message struct {
-	Username string `json:"username"`
-	Message  string `json:"message"`
-}
 
 func main() {
 	var err error
@@ -77,7 +73,7 @@ func main() {
 			continue
 		}
 
-		var msg Message
+		var msg entities.Message
 		err = json.Unmarshal(message.Value, &msg)
 		if err != nil {
 			fmt.Printf("Unmarshal error: %v\n", err)

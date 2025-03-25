@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/TommyLin81/kafka-demo/internal/entities"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/gorilla/websocket"
 )
@@ -16,19 +17,11 @@ var upgrader = websocket.Upgrader{
 	},
 }
 var clients = make(map[*websocket.Conn]bool)
-var broadcast = make(chan Message)
+var broadcast = make(chan entities.Message)
 var producer *kafka.Producer
 var consumer *kafka.Consumer
 var chatMessagesTopic = "chat-messages"
 var filteredMessageTopic = "filtered-messages"
-
-type Message struct {
-	Username string `json:"username"`
-	Message  string `json:"message"`
-}
-
-func init() {
-}
 
 func main() {
 	var err error
@@ -119,7 +112,7 @@ func listenConsumerEvents() {
 			continue
 		}
 
-		var chatMessage Message
+		var chatMessage entities.Message
 		err = json.Unmarshal(message.Value, &chatMessage)
 		if err != nil {
 			fmt.Printf("Unmarshal error: %v\n", err)
@@ -141,7 +134,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	clients[conn] = true
 
 	for {
-		var msg Message
+		var msg entities.Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Println("read message failed:", err)
