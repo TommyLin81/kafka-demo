@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/TommyLin81/kafka-demo/internal/entities"
+	"github.com/TommyLin81/kafka-demo/internal/utils"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/gorilla/websocket"
 )
@@ -36,7 +37,7 @@ func main() {
 
 	fmt.Printf("create producer %v\n", producer)
 
-	go listenProducerEvents()
+	go utils.ListenProducerEvents(producer)
 
 	consumer, err = kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": "localhost:9092",
@@ -84,23 +85,6 @@ func main() {
 	err = http.ListenAndServe(":12345", nil)
 	if err != nil {
 		log.Fatal(err)
-	}
-}
-
-func listenProducerEvents() {
-	for e := range producer.Events() {
-		switch ev := e.(type) {
-		case *kafka.Message:
-			if ev.TopicPartition.Error != nil {
-				fmt.Printf("Delivery failed: %v\n", ev.TopicPartition.Error)
-			} else {
-				fmt.Printf("Delivered message to %v\n", ev.TopicPartition)
-			}
-		case kafka.Error:
-			fmt.Printf("Error: %v\n", ev)
-		default:
-			fmt.Printf("Ignored event: %v\n", ev)
-		}
 	}
 }
 
