@@ -22,7 +22,8 @@
     <button onclick="sendMessage()">Send</button>
 
     <script>
-        let socket = new WebSocket("ws://localhost:12345/chat/1/connect");
+        const WS_SERVER = "{{.WSServer}}";
+        let socket = new WebSocket(`ws://${WS_SERVER}/chat/1/connect`);
         let chatBox = document.getElementById("chat-box");
 
         document.getElementById("message").addEventListener("keypress", function(event) {
