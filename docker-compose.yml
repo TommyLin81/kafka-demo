@@ -75,6 +75,16 @@ services:
     depends_on:
       - chat-server 
 
+  content-moderator:
+    build:
+      context: .
+      dockerfile: docker/content-moderator/dockerfile
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+
 volumes:
   kafka-data:
     driver: local

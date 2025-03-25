@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/TommyLin81/kafka-demo/internal/entities"
@@ -16,12 +17,19 @@ var consumer *kafka.Consumer
 var chatMessagesTopic = "chat-messages"
 var filteredMessageTopic = "filtered-messages"
 var sensitiveWords = []string{"badword", "badword2"}
+var bootstrapServers string
 
+func init() {
+	bootstrapServers = os.Getenv("KAFKA_BOOTSTRAP_SERVERS")
+	if bootstrapServers == "" {
+		bootstrapServers = "localhost:9092"
+	}
+}
 func main() {
 	var err error
 
 	producer, err = kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
+		"bootstrap.servers": bootstrapServers,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -33,7 +41,7 @@ func main() {
 	go utils.ListenProducerEvents(producer)
 
 	consumer, err = kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
+		"bootstrap.servers": bootstrapServers,
 		"group.id":          "chat-group",
 		"auto.offset.reset": "earliest",
 	})
