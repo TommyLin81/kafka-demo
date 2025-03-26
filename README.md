@@ -1,5 +1,7 @@
 # Kafka Demo - A Chat Moderation System
 
+https://github.com/user-attachments/assets/188c7fe0-a411-4d73-a548-75b9fc5f00c3
+
 ## Overview
 
 A simple Kafka application that leverages Kafka's real-time processing mechanism to filter chat messages.
