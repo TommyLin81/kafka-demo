@@ -5,19 +5,21 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
+	"slices"
 
 	"github.com/TommyLin81/kafka-demo/internal/entities"
 	"github.com/TommyLin81/kafka-demo/internal/utils"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
-var producer *kafka.Producer
-var consumer *kafka.Consumer
-var chatMessagesTopic = "chat-messages"
-var filteredMessageTopic = "filtered-messages"
-var sensitiveWords = []string{"badword", "badword2"}
-var bootstrapServers string
+var (
+	producer             *kafka.Producer
+	consumer             *kafka.Consumer
+	chatMessagesTopic    = "chat-messages"
+	filteredMessageTopic = "filtered-messages"
+	sensitiveWords       = []string{"badword", "badword2"}
+	bootstrapServers     string
+)
 
 func init() {
 	bootstrapServers = os.Getenv("KAFKA_BOOTSTRAP_SERVERS")
@@ -25,6 +27,7 @@ func init() {
 		bootstrapServers = "localhost:9092"
 	}
 }
+
 func main() {
 	var err error
 
@@ -57,7 +60,6 @@ func main() {
 		Topic:     &chatMessagesTopic,
 		Partition: 0,
 	}}, 1000)
-
 	if err != nil {
 		log.Println("get committed offsets failed:", err)
 	}
@@ -91,7 +93,7 @@ func main() {
 
 		fmt.Printf("Consumer received message: %v\n", msg)
 
-		if containsSensitiveWords(msg.Message) {
+		if slices.Contains(sensitiveWords, msg.Message) {
 			msg.Message = "🚨🚨🚨 [System] This message was blocked due to sensitive content. 🚨🚨🚨"
 		}
 
@@ -106,19 +108,8 @@ func main() {
 			},
 			nil,
 		)
-
 		if err != nil {
 			log.Println("produce message failed:", err)
 		}
 	}
-}
-
-func containsSensitiveWords(message string) bool {
-	for _, word := range sensitiveWords {
-		if strings.Contains(message, word) {
-			return true
-		}
-	}
-
-	return false
 }

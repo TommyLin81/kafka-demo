@@ -18,13 +18,16 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 }
-var clients = make(map[*websocket.Conn]bool)
-var broadcast = make(chan entities.Message)
-var producer *kafka.Producer
-var consumer *kafka.Consumer
-var chatMessagesTopic = "chat-messages"
-var filteredMessageTopic = "filtered-messages"
-var bootstrapServers string
+
+var (
+	clients              = make(map[*websocket.Conn]bool)
+	broadcast            = make(chan entities.Message)
+	producer             *kafka.Producer
+	consumer             *kafka.Consumer
+	chatMessagesTopic    = "chat-messages"
+	filteredMessageTopic = "filtered-messages"
+	bootstrapServers     string
+)
 
 func init() {
 	bootstrapServers = os.Getenv("KAFKA_BOOTSTRAP_SERVERS")
@@ -65,7 +68,6 @@ func main() {
 		Topic:     &filteredMessageTopic,
 		Partition: 0,
 	}}, 1000)
-
 	if err != nil {
 		log.Println("get committed offsets failed:", err)
 	}
@@ -146,7 +148,6 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 			},
 			nil,
 		)
-
 		if err != nil {
 			log.Println("produce message failed:", err)
 		}
