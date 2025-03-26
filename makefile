@@ -9,3 +9,9 @@ docker-up:  ## Start the services with docker-compose
 
 docker-down:  ## Stop and remove docker-compose services
 	docker-compose down
+
+#######################
+# Linting
+#######################
+lint:  ## Run golangci-lint with auto-fix
+	golangci-lint run --fix ./...
