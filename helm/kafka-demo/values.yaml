@@ -1,0 +1,63 @@
+kafka:
+  listeners:
+    client:
+      containerPort: 9092
+      ## disable sasl
+      protocol: PLAINTEXT
+      name: CLIENT
+      sslClientAuth: ""
+  controller:
+    extraConfig: |
+      num.standby.replicas=1
+  provisioning:
+    enabled: true
+    numPartitions: 1
+    replicationFactor: 3
+    topics:
+      - name: chat-messages
+        configs:
+          cleanup.policy: delete
+          retention.ms: 604800000
+      - name: filtered-messages
+        configs:
+          cleanup.policy: delete
+          retention.ms: 604800000
+
+kafka-ui:
+  yamlApplicationConfig:
+    kafka:
+      clusters:
+        - name: kafka-demo
+          bootstrapServers: kafka-demo.kafka-demo.svc.cluster.local:9092
+    auth:
+      type: disabled
+
+chatServer:
+  image:
+    repository: chat-server
+    tag: latest
+  ports:
+    - containerPort: 80
+      servicePort: 12345
+  environment:
+    - name: KAFKA_BOOTSTRAP_SERVERS
+      value: "kafka-demo.kafka-demo.svc.cluster.local:9092"
+
+chatWeb:
+  image:
+    repository: chat-web
+    tag: latest
+  ports:
+    - containerPort: 8080
+      servicePort: 8081
+  environment:
+    - name: WEBSOCKET_SERVER
+      value: "localhost:12345"
+
+contentModerator:
+  image:
+    repository: content-moderator
+    tag: latest
+  environment:
+    - name: KAFKA_BOOTSTRAP_SERVERS
+      value: "kafka-demo.kafka-demo.svc.cluster.local:9092"

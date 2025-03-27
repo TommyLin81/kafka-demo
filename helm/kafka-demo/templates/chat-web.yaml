@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-web
+  template:
+    metadata:
+      labels:
+        app: chat-web
+    spec:
+      containers:
+        - name: chat-web
+          image: {{ .Values.chatWeb.image.repository }}:{{ .Values.chatWeb.image.tag }}
+          imagePullPolicy: Never
+          ports:
+            {{- range .Values.chatWeb.ports }}
+            - containerPort: {{ .containerPort }}
+            {{- end }}
+          env:
+            {{- range .Values.chatWeb.environment }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-web
+spec:
+  selector:
+    app: chat-web
+  ports:
+    {{- range .Values.chatWeb.ports }}
+    - port: {{ .servicePort }}
+      targetPort: {{ .containerPort }}
+    {{- end }} 

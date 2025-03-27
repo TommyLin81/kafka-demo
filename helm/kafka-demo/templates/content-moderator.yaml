@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content-moderator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: content-moderator
+  template:
+    metadata:
+      labels:
+        app: content-moderator
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox
+          command: ['sh', '-c', '
+            {{- range .Values.contentModerator.environment }}
+            {{- if eq .name "KAFKA_BOOTSTRAP_SERVERS" }}
+            until nc -z {{ .value | trimPrefix "http://" | trimSuffix ":9092" }} 9092; do echo waiting for kafka; sleep 2; done;
+            {{- end }}
+            {{- end }}
+          ']
+      containers:
+        - name: content-moderator
+          image: {{ .Values.contentModerator.image.repository }}:{{ .Values.contentModerator.image.tag }}
+          imagePullPolicy: Never
+          env:
+            {{- range .Values.contentModerator.environment }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }} 

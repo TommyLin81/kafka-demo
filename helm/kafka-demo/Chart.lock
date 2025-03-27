@@ -1,0 +1,9 @@
+dependencies:
+- name: kafka
+  repository: https://charts.bitnami.com/bitnami
+  version: 31.5.0
+- name: kafka-ui
+  repository: https://ui.charts.kafbat.io
+  version: 1.4.12
+digest: sha256:b1d44d02416ddf7daad7a739e2614c6a44bf1239ab924e8d8f4f2ae71a2e5ab1
+generated: "2025-03-27T00:21:48.318942+08:00"

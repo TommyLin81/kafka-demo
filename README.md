@@ -4,16 +4,16 @@ https://github.com/user-attachments/assets/188c7fe0-a411-4d73-a548-75b9fc5f00c3
 
 ## Overview
 
-A simple Kafka application that leverages Kafka's real-time processing mechanism to filter chat messages.
+A simple Kafka-based application that leverages real-time stream processing to filter chat messages.
 
 ## Prerequisites
 
-- `golang v1.24`
-- `docker` or `helm chart`
+- `Go v1.24`
+- `Docker` or `Helm Chart` (choose either for deployment)
 
 ## Architecture
 
-The chat moderation system consists of the following components:
+The chat moderation system is composed of the following components:
 
 - `chat-server`: WebSocket server handling client connections and message routing
 - `chat-web`: Frontend web interface
@@ -61,11 +61,13 @@ sequenceDiagram
 
 ## Features
 
-- Real-time Processing
-- Event-Driven Architecture
-- Data Pipeline
+- Real-time Message Processing
+- Event-Driven Microservices Architecture
+- Stream-based Data Pipeline
 
-## Quick Start with Docker Compose
+## Quick Start
+
+### Using Docker Compose
 
 1. Start the services
 
@@ -78,12 +80,41 @@ sequenceDiagram
    - Chat Interface: http://localhost:8081
    - Kafka UI: http://localhost:8080
 
+### Using Helm Chart on Minikube
+
+1. Build dependency
+
+    ```bash
+    make helm-setup
+    make minikube-load-images
+    ```
+
+2. Install chart
+
+    ```bash
+    make helm-install
+    ```
+
+3. Port forward
+
+    ```bash
+    make port-forward
+    ```
+
+4. Access the application
+
+   - Chat Interface: http://localhost:8081
+   - Kafka UI: http://localhost:8080
+
+**Note:** Ensure that `Minikube`, `Helm`, and `kubectl` are installed on your system.
+
 ### Project Structure
 
 ```bash
 .
 ├── cmd             # main entry points for applications
 ├── docker          # docker configuration file
+├── helm            # helm chart template
 ├── internal
 │   ├── entities    # core data structures
 │   └── utils       # shared utility functions

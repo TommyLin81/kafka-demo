@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-server
+  template:
+    metadata:
+      labels:
+        app: chat-server
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox
+          command: ['sh', '-c', '
+            {{- range .Values.chatServer.environment }}
+            {{- if eq .name "KAFKA_BOOTSTRAP_SERVERS" }}
+            until nc -z {{ .value | trimPrefix "http://" | trimSuffix ":9092" }} 9092; do echo waiting for kafka; sleep 2; done;
+            {{- end }}
+            {{- end }}
+          ']
+      containers:
+        - name: chat-server
+          image: {{ .Values.chatServer.image.repository }}:{{ .Values.chatServer.image.tag }}
+          imagePullPolicy: Never
+          ports:
+            {{- range .Values.chatServer.ports }}
+            - containerPort: {{ .containerPort }}
+            {{- end }}
+          env:
+            {{- range .Values.chatServer.environment }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-server
+spec:
+  selector:
+    app: chat-server
+  ports:
+    {{- range .Values.chatServer.ports }}
+    - port: {{ .servicePort }}
+      targetPort: {{ .containerPort }}
+    {{- end }} 
