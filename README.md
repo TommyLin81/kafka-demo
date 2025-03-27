@@ -132,3 +132,11 @@ Environment Variables:
 
 - `chat-messages`: Raw chat messages
 - `filtered-messages`: Moderated messages
+
+## Notes
+
+The system's Kafka consumer uses manual partition assignment instead of the consumer group mechanism, for the following reasons:
+
+1. To avoid latency (several seconds) introduced by consumer group rebalancing
+2. To ensure better real-time responsiveness during demo presentations
+3. Since this is a demo system, horizontal scalability is not a concern, making manual assignment a simpler and more controllable choice
